@@ -1,11 +1,8 @@
-from flask import Flask, render_template_string
-import logging
+import os
+import datetime
+from flask import Flask
 
 app = Flask(__name__)
-
-# Disable Flask logging
-log = logging.getLogger('werkzeug')
-log.disabled = True
 
 @app.route('/')
 def home():
@@ -32,7 +29,7 @@ def health():
 
 @app.route('/uptime')
 def uptime():
-    """Uptime monitoring endpoint"""
+    """Uptime monitoring"""
     return {
         "status": "up",
         "uptime": "24/7",
@@ -40,7 +37,7 @@ def uptime():
     }, 200
 
 def keep_alive():
-    """Start web server for uptime monitoring"""
+    """Start web server"""
     try:
         from threading import Thread
         port = int(os.environ.get('PORT', 10000))
@@ -48,4 +45,4 @@ def keep_alive():
         print("✅ Keep-alive server started on port", port)
     except Exception as e:
         print("❌ Keep-alive failed:", e)
-      
+    
