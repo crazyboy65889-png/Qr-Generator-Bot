@@ -11,5 +11,7 @@ services:
         sync: false
       - key: ENCRYPTION_KEY
         sync: false
+      - key: PORT
+        value: "10000"
     healthCheckPath: /health
     autoDeploy: true
