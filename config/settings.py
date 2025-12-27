@@ -2,7 +2,7 @@ import discord
 import os
 
 class BotConfig:
-    """Centralized bot configuration"""
+    """FINAL Bot Configuration - Owner ID & Support Server Added"""
     
     # Discord Intents
     INTENTS = discord.Intents(
@@ -13,13 +13,17 @@ class BotConfig:
         presences=False,
     )
     
+    # Owner & Support
+    OWNER_ID = int(os.getenv('BOT_OWNER_ID', 1232586090532306966))
+    SUPPORT_SERVER = os.getenv('SUPPORT_SERVER_INVITE', 'https://discord.gg/5bFnXdUp8U')
+    
     # Environment Variables
     TOKEN = os.getenv('DISCORD_TOKEN')
     MONGO_URI = os.getenv('MONGO_URI')
     VOICE_CHANNEL_IDS = [
         int(id.strip()) for id in os.getenv('VOICE_CHANNEL_IDS', '').split(',') if id.strip()
     ]
-    ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY', '').encode()
+    ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY', 'X7z9Qp3rLs8vNm2aBf4cKd5eWj6hGy1u').encode()
     
     # Rate Limiting
     MAX_COMMANDS_PER_MINUTE = int(os.getenv('MAX_COMMANDS_PER_MINUTE', 5))
@@ -44,7 +48,6 @@ class BotConfig:
     PORT = int(os.getenv('PORT', 10000))
     HOST = os.getenv('HOST', '0.0.0.0')
     
-    # Validation
     @staticmethod
     def validate():
         """Validate configuration"""
@@ -55,7 +58,8 @@ class BotConfig:
             errors.append("MONGO_URI is missing")
         if not BotConfig.VOICE_CHANNEL_IDS:
             errors.append("VOICE_CHANNEL_IDS is missing")
-        if len(BotConfig.ENCRYPTION_KEY) not in [0, 32]:
-            errors.append("ENCRYPTION_KEY must be exactly 32 characters or empty")
+        if len(BotConfig.ENCRYPTION_KEY) not in [32, 44]:  # 32 raw or 44 base64
+            errors.append("ENCRYPTION_KEY must be exactly 32 characters")
         
         return errors
+    
