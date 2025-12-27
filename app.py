@@ -8,7 +8,6 @@ from discord.ext import commands, tasks
 import os
 from flask import Flask
 from threading import Thread
-import pymongo
 from pymongo import MongoClient
 
 # Setup logging
@@ -34,25 +33,21 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return 'UPI Bot is running'
+    return 'Digamber UPI Bot is running'
 
 @app.route('/health')
 def health():
     return 'OK', 200
 
-@app.route('/ping')
-def ping():
-    return 'pong'
-
 def run_flask():
-    app.run(host='0.0.0.0', port=PORT, debug=False)
+    app.run(host='0.0.0.0', port=PORT, debug=False, threaded=True)
 
 # Start Flask in thread
 flask_thread = Thread(target=run_flask, daemon=True)
 flask_thread.start()
 logger.info(f"✅ Flask server started on port {PORT}")
 
-class UPI_Bot(commands.Bot):
+class DigamberUPIBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.message_content = True
@@ -65,7 +60,7 @@ class UPI_Bot(commands.Bot):
             help_command=None,
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name="Payment Channels 24/7"
+                name="Digamber Payment Channels 24/7"
             ),
             status=discord.Status.dnd
         )
@@ -75,6 +70,7 @@ class UPI_Bot(commands.Bot):
         self.mongo_client = None
         self.voice_channels = VOICE_CHANNELS
         self.start_time = datetime.now()
+        self.brand_name = "Digamber"
         
     async def setup_hook(self):
         try:
@@ -82,8 +78,18 @@ class UPI_Bot(commands.Bot):
             logger.info("Connecting to MongoDB...")
             self.mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
             self.mongo_client.admin.command('ping')
-            self.db = self.mongo_client.upi_bot
+            self.db = self.mongo_client.digamber_upi_bot
             logger.info("✅ MongoDB connected")
+            
+            # Create collections if not exists
+            collections = self.db.list_collection_names()
+            if 'users' not in collections:
+                self.db.create_collection('users')
+                self.db.users.create_index('user_id', unique=True)
+            
+            if 'upi_records' not in collections:
+                self.db.create_collection('upi_records')
+                self.db.upi_records.create_index('user_id')
             
             # Load cogs
             await self.load_extension('cogs.admin')
@@ -130,12 +136,11 @@ class UPI_Bot(commands.Bot):
                 if channel.name.startswith("💰 ") and len(channel.members) == 0:
                     try:
                         await channel.delete()
-                        logger.info(f"🗑️ Deleted empty channel: {channel.name}")
-                    except Exception as e:
+                    except:
                         pass
     
     async def on_ready(self):
-        logger.info(f"✅ Bot ready as {self.user} (ID: {self.user.id})")
+        logger.info(f"✅ {self.brand_name} Bot ready as {self.user}")
         logger.info(f"📊 Servers: {len(self.guilds)}")
         
         # Connect to voice channels
@@ -146,24 +151,10 @@ class UPI_Bot(commands.Bot):
                     try:
                         if not guild.voice_client:
                             await channel.connect()
-                            logger.info(f"✅ Joined {channel.name}")
-                    except Exception as e:
-                        if "Already connected" not in str(e):
-                            logger.error(f"Join error: {e}")
-    
-    async def close(self):
-        logger.info("Shutting down bot...")
-        for guild in self.guilds:
-            if guild.voice_client:
-                await guild.voice_client.disconnect(force=True)
-        
-        if self.mongo_client:
-            self.mongo_client.close()
-        
-        await super().close()
+                    except:
+                        pass
 
-# Create and run bot
-bot = UPI_Bot()
+bot = DigamberUPIBot()
 
 if __name__ == "__main__":
     try:
