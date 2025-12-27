@@ -91,15 +91,22 @@ class DigamberUPIBot(commands.Bot):
                 self.db.create_collection('upi_records')
                 self.db.upi_records.create_index('user_id')
             
-            # Load cogs
-            await self.load_extension('cogs.admin')
-            await self.load_extension('cogs.setup')
-            await self.load_extension('cogs.voice')
-            logger.info("✅ Cogs loaded")
+            # Load cogs with error handling
+            cogs_to_load = ['cogs.admin', 'cogs.setup', 'cogs.voice']
+            for cog in cogs_to_load:
+                try:
+                    await self.load_extension(cog)
+                    logger.info(f"✅ Loaded cog: {cog}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to load {cog}: {e}")
+                    traceback.print_exc()
             
             # Sync commands
-            await self.tree.sync()
-            logger.info("✅ Commands synced")
+            try:
+                synced = await self.tree.sync()
+                logger.info(f"✅ Synced {len(synced)} commands")
+            except Exception as e:
+                logger.error(f"❌ Failed to sync commands: {e}")
             
             # Start background tasks
             self.monitor_voice_channels.start()
@@ -153,6 +160,11 @@ class DigamberUPIBot(commands.Bot):
                             await channel.connect()
                     except:
                         pass
+    
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        logger.error(f"Command error: {error}")
 
 bot = DigamberUPIBot()
 
