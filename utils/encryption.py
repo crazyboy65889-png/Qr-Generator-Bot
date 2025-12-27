@@ -4,11 +4,12 @@ import base64
 import hashlib
 
 class EncryptionManager:
-    """Handle data encryption/decryption"""
+    """Advanced encryption for sensitive data"""
     
     def __init__(self, key=None):
         if key and len(key) == 32:
-            self.key = base64.urlsafe_b64encode(key.ljust(32)[:32])
+            # FIX: Convert string to bytes before base64 encoding
+            self.key = base64.urlsafe_b64encode(key.ljust(32)[:32].encode('utf-8'))
         else:
             self.key = Fernet.generate_key()
         
@@ -32,7 +33,7 @@ class EncryptionManager:
         """Encrypt dictionary values"""
         encrypted = {}
         for key, value in data_dict.items():
-            if isinstance(value, str) and key in ['upi_id', 'name', 'note']:
+            if isinstance(value, str) and value and key in ['upi_id', 'name', 'note']:
                 encrypted[key] = self.encrypt(value)
             else:
                 encrypted[key] = value
@@ -42,12 +43,12 @@ class EncryptionManager:
         """Decrypt dictionary values"""
         decrypted = {}
         for key, value in encrypted_dict.items():
-            if isinstance(value, str) and key in ['upi_id', 'name', 'note']:
+            if isinstance(value, str) and value and key in ['upi_id', 'name', 'note']:
                 try:
                     decrypted[key] = self.decrypt(value)
                 except:
-                    decrypted[key] = value  # Fallback for non-encrypted
+                    decrypted[key] = value  # Fallback
             else:
                 decrypted[key] = value
         return decrypted
-      
+        
