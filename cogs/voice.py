@@ -15,21 +15,20 @@ class VoiceCog(commands.Cog):
             return
         
         # User joined monitored channel
-        if (before.channel != after.channel and 
-            after.channel and 
-            after.channel.id in self.bot.voice_channels):
+        if after.channel and after.channel.id in self.bot.voice_channels:
+            current_time = time.time()
             
             # Check cooldown
-            current_time = time.time()
             if member.id in self.user_cooldowns:
                 if current_time - self.user_cooldowns[member.id] < 30:
                     try:
                         await member.move_to(None)
+                        await member.send("⏳ Please wait 30 seconds before creating another payment channel.")
                     except:
                         pass
                     return
             
-            # Check max channels
+            # Check max temp channels (3 per user)
             user_channels = self.user_temp_channels.get(member.id, [])
             active_channels = []
             for channel_id in user_channels[:]:
@@ -42,23 +41,23 @@ class VoiceCog(commands.Cog):
             if len(active_channels) >= 3:
                 try:
                     await member.move_to(None)
+                    await member.send("🚫 You can only have 3 active payment channels at once.")
                 except:
                     pass
                 return
             
             # Create temp channel
             try:
-                overwrites = {
-                    member.guild.default_role: discord.PermissionOverwrite(connect=False),
-                    member: discord.PermissionOverwrite(connect=True),
-                    member.guild.me: discord.PermissionOverwrite(connect=True, manage_channels=True)
-                }
-                
-                temp_channel = await member.guild.create_voice_channel(
+                guild = after.channel.guild
+                temp_channel = await guild.create_voice_channel(
                     name=f"💰 {member.display_name}'s Payment",
                     category=after.channel.category,
                     user_limit=2,
-                    overwrites=overwrites
+                    overwrites={
+                        guild.default_role: discord.PermissionOverwrite(connect=False),
+                        member: discord.PermissionOverwrite(connect=True, view_channel=True),
+                        guild.me: discord.PermissionOverwrite(connect=True, manage_channels=True, view_channel=True)
+                    }
                 )
                 
                 await member.move_to(temp_channel)
@@ -69,18 +68,32 @@ class VoiceCog(commands.Cog):
                 self.user_temp_channels[member.id].append(temp_channel.id)
                 self.user_cooldowns[member.id] = current_time
                 
+                # Send welcome message
+                try:
+                    embed = discord.Embed(
+                        title="💳 Payment Channel Created",
+                        description=f"Welcome {member.mention}!\n\nUse `/setup` to create your payment QR code.\nThis channel will auto-delete when empty.",
+                        color=discord.Color.green()
+                    )
+                    await temp_channel.send(embed=embed)
+                except:
+                    pass
+                    
             except Exception as e:
-                print(f"Error creating temp channel: {e}")
+                print(f"Temp channel error: {e}")
         
         # User left temp channel
-        if (before.channel and 
-            before.channel.name.startswith("💰 ") and 
-            len(before.channel.members) == 0):
-            
+        if before.channel and before.channel.name.startswith("💰 "):
+            # Wait 5 seconds then check if empty
             await asyncio.sleep(5)
+            
             if before.channel and len(before.channel.members) == 0:
                 try:
                     await before.channel.delete()
+                    # Remove from tracking
+                    if member.id in self.user_temp_channels:
+                        if before.channel.id in self.user_temp_channels[member.id]:
+                            self.user_temp_channels[member.id].remove(before.channel.id)
                 except:
                     pass
 
