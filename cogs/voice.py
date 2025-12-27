@@ -8,6 +8,7 @@ class VoiceCog(commands.Cog):
         self.bot = bot
         self.user_temp_channels = {}
         self.user_cooldowns = {}
+        self.brand_name = "Digamber"
     
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -23,12 +24,11 @@ class VoiceCog(commands.Cog):
                 if current_time - self.user_cooldowns[member.id] < 30:
                     try:
                         await member.move_to(None)
-                        await member.send("⏳ Please wait 30 seconds before creating another payment channel.")
                     except:
                         pass
                     return
             
-            # Check max temp channels (3 per user)
+            # Check max temp channels
             user_channels = self.user_temp_channels.get(member.id, [])
             active_channels = []
             for channel_id in user_channels[:]:
@@ -41,7 +41,6 @@ class VoiceCog(commands.Cog):
             if len(active_channels) >= 3:
                 try:
                     await member.move_to(None)
-                    await member.send("🚫 You can only have 3 active payment channels at once.")
                 except:
                     pass
                 return
@@ -71,8 +70,13 @@ class VoiceCog(commands.Cog):
                 # Send welcome message
                 try:
                     embed = discord.Embed(
-                        title="💳 Payment Channel Created",
-                        description=f"Welcome {member.mention}!\n\nUse `/setup` to create your payment QR code.\nThis channel will auto-delete when empty.",
+                        title=f"💳 {self.brand_name} Payment Channel",
+                        description=f"Welcome {member.mention}!\n\n"
+                                   f"**Quick Setup:**\n"
+                                   f"1. Use `/setup` to save UPI (once)\n"
+                                   f"2. Use `/qr 100` for ₹100 QR\n"
+                                   f"3. Use `/dynamic` for custom amount QR\n\n"
+                                   f"*Channel auto-deletes when empty*",
                         color=discord.Color.green()
                     )
                     await temp_channel.send(embed=embed)
@@ -84,13 +88,10 @@ class VoiceCog(commands.Cog):
         
         # User left temp channel
         if before.channel and before.channel.name.startswith("💰 "):
-            # Wait 5 seconds then check if empty
             await asyncio.sleep(5)
-            
             if before.channel and len(before.channel.members) == 0:
                 try:
                     await before.channel.delete()
-                    # Remove from tracking
                     if member.id in self.user_temp_channels:
                         if before.channel.id in self.user_temp_channels[member.id]:
                             self.user_temp_channels[member.id].remove(before.channel.id)
