@@ -1,1 +1,48 @@
-
+{
+    "version": "3.0",
+    "last_updated": "2024-01-01T00:00:00",
+    "monitoring": {
+        "voice_channels": [
+            1449332744462274762,
+            1449333885602234410
+        ],
+        "status": "active",
+        "auto_join": true,
+        "reconnect_attempts": 0,
+        "total_connections": 0
+    },
+    "security": {
+        "encryption_enabled": true,
+        "rate_limiting": true,
+        "cooldowns_enabled": true,
+        "max_temp_channels_per_user": 3,
+        "voice_join_cooldown": 30
+    },
+    "cleanup": {
+        "auto_cleanup_interval_hours": 1,
+        "temp_channel_max_age_hours": 2,
+        "analytics_retention_days": 30
+    },
+    "web_dashboard": {
+        "enabled": true,
+        "port": 10000,
+        "requires_auth": true
+    },
+    "bot_metrics": {
+        "start_time": "",
+        "commands_processed": 0,
+        "qr_codes_generated": 0,
+        "errors_logged": 0,
+        "temp_channels_created": 0,
+        "guilds_joined": 0,
+        "guilds_left": 0
+    },
+    "feature_flags": {
+        "premium_features": true,
+        "analytics": true,
+        "voice_monitoring": true,
+        "auto_cleanup": true,
+        "web_dashboard": true,
+        "encryption": true
+    }
+}
