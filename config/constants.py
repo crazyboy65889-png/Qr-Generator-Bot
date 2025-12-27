@@ -1,7 +1,7 @@
 class Constants:
-    """Bot constants"""
+    """Bot Constants - Updated"""
     
-    # UPI Providers
+    # UPI Providers Database
     VALID_PROVIDERS = {
         'okhdfcbank', 'okaxis', 'oksbi', 'okicici', 'paytm', 'ybl',
         'ibl', 'axl', 'barodampay', 'kaypay', 'cnrb', 'idfcbank',
@@ -33,4 +33,10 @@ class Constants:
     MAX_UPI_LENGTH = 100
     MAX_AMOUNT = 999999.99
     MIN_AMOUNT = 0.01
-  
+    
+    # Bot Info
+    VERSION = "3.0.0-Ultimate"
+    AUTHOR = "UPIMaster"
+    SUPPORT_SERVER = "https://discord.gg/5bFnXdUp8U"
+    OWNER_ID = 1232586090532306966
+    
