@@ -1,3 +1,4 @@
+# cogs/setup.py - SIMPLIFIED VERSION
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -19,14 +20,6 @@ class SetupCog(commands.Cog):
         note="Note (optional)",
         color="QR color (blue, green, red, purple, orange, pink)"
     )
-    @app_commands.choices(color=[
-        app_commands.Choice(name="Blue", value="blue"),
-        app_commands.Choice(name="Green", value="green"),
-        app_commands.Choice(name="Red", value="red"),
-        app_commands.Choice(name="Purple", value="purple"),
-        app_commands.Choice(name="Orange", value="orange"),
-        app_commands.Choice(name="Pink", value="pink"),
-    ])
     async def setup_command(self, interaction: discord.Interaction, upi_id: str, name: str, amount: float, note: str = "", color: str = "blue"):
         await interaction.response.defer(ephemeral=True)
         
@@ -57,27 +50,13 @@ class SetupCog(commands.Cog):
         try:
             # Generate QR code
             upi_url = f"upi://pay?pa={upi_id}&pn={name}&am={amount}&tn={note}&cu=INR"
-            qr = qrcode.QRCode(version=10, box_size=10, border=4)
-            qr.add_data(upi_url)
-            qr.make(fit=True)
+            qr = qrcode.make(upi_url)
             
-            # Set color
-            colors = {
-                'blue': (0, 122, 255),
-                'green': (52, 199, 89),
-                'red': (255, 59, 48),
-                'purple': (88, 86, 214),
-                'orange': (255, 149, 0),
-                'pink': (255, 45, 85)
-            }
-            fill_color = colors.get(color.lower(), (0, 122, 255))
-            
-            img = qr.make_image(fill_color=fill_color, back_color="white")
             img_bytes = BytesIO()
-            img.save(img_bytes, format='PNG')
+            qr.save(img_bytes, format='PNG')
             img_bytes.seek(0)
             
-            # Save to database
+            # Save to database (NO ENCRYPTION)
             self.bot.db.upi_records.insert_one({
                 'user_id': user_id,
                 'upi_id': upi_id,
