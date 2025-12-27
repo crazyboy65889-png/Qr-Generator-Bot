@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: upi-discord-bot
+    name: digamber-upi-bot
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python app.py
@@ -8,8 +8,6 @@ services:
       - key: DISCORD_TOKEN
         sync: false
       - key: MONGO_URI
-        sync: false
-      - key: ENCRYPTION_KEY
         sync: false
       - key: PORT
         value: "10000"
