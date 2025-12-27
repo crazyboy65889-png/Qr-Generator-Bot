@@ -1,1 +1,32 @@
-
+services:
+  - type: web
+    name: upi-discord-bot-premium
+    env: python
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: VOICE_CHANNEL_IDS
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: DASHBOARD_PASSWORD
+        sync: false
+      - key: BOT_OWNER_ID
+        sync: false
+      - key: PORT
+        value: 10000
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: PYTHONIOENCODING
+        value: utf-8
+    healthCheckPath: /health
+    autoDeploy: true
+    pullRequestPreviewsEnabled: false
+    
