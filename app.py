@@ -24,6 +24,7 @@ from utils.encryption import EncryptionManager
 import traceback
 import gc
 import aiohttp
+import logging
 
 # Setup master logger
 logger = setup_master_logger()
