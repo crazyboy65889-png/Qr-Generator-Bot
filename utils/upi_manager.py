@@ -4,7 +4,7 @@ import datetime
 import logging
 from typing import Optional, Dict, Any
 from utils.encryption import EncryptionManager
-from pymongo.errors import OperationFailure  # ✅ ADD THIS IMPORT
+from pymongo.errors import OperationFailure
 
 logger = logging.getLogger('UPIManager')
 
@@ -21,43 +21,33 @@ class UltimateUPIManager:
         self.encryption = encryption
     
     async def initialize(self):
-        """Initialize collections and indexes"""
+        """Initialize collections and indexes - SAFE VERSION"""
         try:
             # Users collection indexes
             await self.users_collection.create_index([('user_id', 1)], unique=True)
-            await self.users_collection.create_index([('upi_id', 1)])
             
-            # Analytics collection indexes - WITH CONFLICT HANDLING
+            # Analytics collection - USE DIFFERENT INDEX NAME TO AVOID CONFLICT
             try:
-                # Try to create TTL index, drop if conflict
                 await self.analytics_collection.create_index(
                     [('timestamp', 1)], 
-                    expireAfterSeconds=2592000,  # 30 days
-                    name='timestamp_ttl'
+                    expireAfterSeconds=2592000,
+                    name='analytics_timestamp_ttl'  # ✅ UNIQUE NAME
                 )
+                logger.info("✅ Created TTL index with unique name")
             except OperationFailure as e:
                 if e.code == 85:  # Index options conflict
-                    logger.warning("⚠️ TTL index conflict detected, dropping old index...")
-                    await self.analytics_collection.drop_index('timestamp_1')
-                    # Recreate with correct options
-                    await self.analytics_collection.create_index(
-                        [('timestamp', 1)], 
-                        expireAfterSeconds=2592000,
-                        name='timestamp_ttl'
-                    )
+                    logger.warning("⚠️ Index already exists, skipping...")
                 else:
-                    raise
+                    logger.error(f"❌ Index creation failed: {e}")
             
             # Temp channels indexes
             await self.temp_channels_collection.create_index([('channel_id', 1)], unique=True)
-            await self.temp_channels_collection.create_index([('created_at', 1)], expireAfterSeconds=7200)
             
-            logger.info("✅ Database initialized with indexes")
+            logger.info("✅ Database initialized successfully")
             
         except Exception as e:
             logger.error(f"❌ Database initialization failed: {e}")
-            # Don't stop bot if index creation fails
-            logger.info("⚠️ Continuing without index optimization...")
+            logger.info("⚠️ Continuing bot startup anyway...")
     
     async def save_upi(self, user_id: str, upi_id: str, name: str, note: Optional[str] = None, encrypt: bool = True) -> Dict[str, Any]:
         """Save UPI data with encryption"""
@@ -93,12 +83,15 @@ class UltimateUPIManager:
             
             self.cache[user_id] = document
             
-            await self.analytics_collection.insert_one({
-                'event_type': 'upi_saved',
-                'timestamp': datetime.datetime.utcnow(),
-                'user_id': user_id,
-                'encrypted': encrypt
-            })
+            try:
+                await self.analytics_collection.insert_one({
+                    'event_type': 'upi_saved',
+                    'timestamp': datetime.datetime.utcnow(),
+                    'user_id': user_id,
+                    'encrypted': encrypt
+                })
+            except:
+                pass
             
             logger.info(f"💾 UPI data saved for user {user_id}")
             
@@ -213,4 +206,4 @@ class UltimateUPIManager:
         else:
             self.cache.clear()
         logger.info(f"🧹 Cache cleared")
-                
+        
