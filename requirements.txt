@@ -1,9 +1,8 @@
 discord.py
 pymongo
-motor
 Flask
 python-dotenv
 qrcode
 Pillow
-requests
+motor
 audioop-lts
