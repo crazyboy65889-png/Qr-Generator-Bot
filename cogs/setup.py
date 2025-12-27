@@ -5,9 +5,7 @@ import qrcode
 from io import BytesIO
 from datetime import datetime
 import time
-import base64
 from PIL import Image, ImageDraw, ImageFont
-import os
 
 class SetupCog(commands.Cog):
     def __init__(self, bot):
@@ -15,7 +13,7 @@ class SetupCog(commands.Cog):
         self.brand_name = "Digamber"
         self.user_cooldowns = {}
     
-    async def check_user_upi(self, user_id: int):
+    def check_user_upi(self, user_id: int):
         """Check if user has saved UPI"""
         user_data = self.bot.db.users.find_one({'user_id': user_id})
         if user_data and 'upi_id' in user_data and 'name' in user_data:
@@ -32,7 +30,7 @@ class SetupCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         
         # Check if already has UPI
-        existing = await self.check_user_upi(interaction.user.id)
+        existing = self.check_user_upi(interaction.user.id)
         if existing:
             await interaction.followup.send(
                 f"✅ You already have UPI saved!\n\n"
@@ -84,7 +82,7 @@ class SetupCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         
         # Get user's saved UPI
-        user_data = await self.check_user_upi(interaction.user.id)
+        user_data = self.check_user_upi(interaction.user.id)
         if not user_data:
             await interaction.followup.send(
                 "📝 **You need to setup your UPI first!**\n"
@@ -103,7 +101,7 @@ class SetupCog(commands.Cog):
             # Generate QR code
             upi_url = f"upi://pay?pa={user_data['upi_id']}&pn={user_data['name']}&am={amount}&cu=INR"
             
-            # Create QR with logo
+            # Create QR
             qr = qrcode.QRCode(
                 version=10,
                 error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -122,7 +120,6 @@ class SetupCog(commands.Cog):
             
             # Add text at bottom
             try:
-                # Try to load font, fallback to default
                 font = ImageFont.truetype("arial.ttf", 20)
             except:
                 font = ImageFont.load_default()
@@ -172,7 +169,7 @@ class SetupCog(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         
         # Get user's saved UPI
-        user_data = await self.check_user_upi(interaction.user.id)
+        user_data = self.check_user_upi(interaction.user.id)
         if not user_data:
             await interaction.followup.send(
                 "📝 **You need to setup your UPI first!**\n"
@@ -223,7 +220,7 @@ class SetupCog(commands.Cog):
                 'user_id': interaction.user.id,
                 'upi_id': user_data['upi_id'],
                 'name': user_data['name'],
-                'amount': 0,  # Dynamic amount
+                'amount': 0,
                 'created_at': datetime.now(),
                 'type': 'dynamic_amount'
             })
@@ -251,7 +248,7 @@ class SetupCog(commands.Cog):
         """View saved UPI info"""
         await interaction.response.defer(ephemeral=True)
         
-        user_data = await self.check_user_upi(interaction.user.id)
+        user_data = self.check_user_upi(interaction.user.id)
         if not user_data:
             await interaction.followup.send(
                 "📝 **No UPI saved yet!**\n"
@@ -297,7 +294,7 @@ class SetupCog(commands.Cog):
         """Update UPI info"""
         await interaction.response.defer(ephemeral=True)
         
-        user_data = await self.check_user_upi(interaction.user.id)
+        user_data = self.check_user_upi(interaction.user.id)
         if not user_data:
             await interaction.followup.send("❌ You don't have UPI saved yet. Use `/setup` first.", ephemeral=True)
             return
